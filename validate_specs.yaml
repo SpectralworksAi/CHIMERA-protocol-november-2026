@@ -1,0 +1,44 @@
+name: Validate CHIMERA Specifications
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate-specs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install validation tools
+        run: |
+          pip install jsonschema pyyaml
+
+      - name: Validate JSON Schemas & PION Packets
+        run: |
+          python -c "
+          import glob, json, sys
+          for path in glob.glob('**/*.json', recursive=True):
+              try:
+                  with open(path, 'r', encoding='utf-8') as f:
+                      json.load(f)
+                  print(f'VALID: {path}')
+              except Exception as e:
+                  print(f'INVALID: {path} -> {e}')
+                  sys.exit(1)
+          "
+
+      - name: Check Markdown Links
+        uses: gaurav-nelson/github-action-markdown-link-check@v1
+        with:
+          use-quiet-mode: 'yes'
+          check-modified-files-only: 'no'
